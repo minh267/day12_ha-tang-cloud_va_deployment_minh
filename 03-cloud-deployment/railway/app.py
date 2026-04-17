@@ -8,10 +8,17 @@ from datetime import datetime, timezone
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.docs import get_swagger_ui_html
 import uvicorn
 from utils.mock_llm import ask
 
-app = FastAPI(title="Agent on Railway", version="1.0.0")
+app = FastAPI(
+    title="Agent on Railway",
+    version="1.0.0",
+    docs_url=None,
+    redoc_url=None,
+    openapi_url="/openapi.json",
+)
 START_TIME = time.time()
 
 app.add_middleware(
@@ -29,6 +36,14 @@ def root():
         "docs": "/docs",
         "health": "/health",
     }
+
+
+@app.get("/docs", include_in_schema=False)
+def custom_docs():
+    return get_swagger_ui_html(
+        openapi_url=app.openapi_url,
+        title=f"{app.title} - Swagger UI",
+    )
 
 
 @app.post("/ask")
@@ -62,4 +77,4 @@ if __name__ == "__main__":
     # ✅ Railway inject PORT — PHẢI đọc từ env
     port = int(os.getenv("PORT", 8000))
     print(f"Starting on port {port} (from PORT env var)")
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    uvicorn.run("app:app", host="0.0.0.0", port=port, reload=False)

@@ -1,100 +1,88 @@
-# Lab 12 — Complete Production Agent
+# Lab 12 - Complete Production Agent
 
-Kết hợp TẤT CẢ những gì đã học trong 1 project hoàn chỉnh.
+This folder contains a simple chatbot API built with FastAPI and OpenAI.
 
-## Checklist Deliverable
+## Features
 
-- [x] Dockerfile (multi-stage, < 500 MB)
-- [x] docker-compose.yml (agent + redis)
-- [x] .dockerignore
-- [x] Health check endpoint (`GET /health`)
-- [x] Readiness endpoint (`GET /ready`)
-- [x] API Key authentication
-- [x] Rate limiting
-- [x] Cost guard
-- [x] Config từ environment variables
-- [x] Structured logging
-- [x] Graceful shutdown
-- [x] Public URL ready (Railway / Render config)
+- `POST /ask` for chatbot responses
+- `GET /health` and `GET /ready` for platform checks
+- `GET /docs` for Swagger UI
+- API key protection with `X-API-Key`
+- Basic rate limit and budget tracking
+- Railway-ready config
 
----
+## Local Run
 
-## Cấu Trúc
-
-```
-06-lab-complete/
-├── app/
-│   ├── main.py         # Entry point — kết hợp tất cả
-│   ├── config.py       # 12-factor config
-│   ├── auth.py         # API Key + JWT
-│   ├── rate_limiter.py # Rate limiting
-│   └── cost_guard.py   # Budget protection
-├── Dockerfile          # Multi-stage, production-ready
-├── docker-compose.yml  # Full stack
-├── railway.toml        # Deploy Railway
-├── render.yaml         # Deploy Render
-├── .env.example        # Template
-├── .dockerignore
-└── requirements.txt
-```
-
----
-
-## Chạy Local
+1. Make sure `OPENAI_API_KEY` is filled in `.env`.
+2. Install dependencies:
 
 ```bash
-# 1. Setup
-cp .env.example .env
-
-# 2. Chạy với Docker Compose
-docker compose up
-
-# 3. Test
-curl http://localhost/health
-
-# 4. Lấy API key từ .env, test endpoint
-API_KEY=$(grep AGENT_API_KEY .env | cut -d= -f2)
-curl -H "X-API-Key: $API_KEY" \
-     -X POST http://localhost/ask \
-     -H "Content-Type: application/json" \
-     -d '{"question": "What is deployment?"}'
+pip install -r requirements.txt
 ```
 
----
-
-## Deploy Railway (< 5 phút)
+3. Start the app:
 
 ```bash
-# Cài Railway CLI
-npm i -g @railway/cli
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+```
 
-# Login và deploy
+4. Test the chatbot:
+
+```bash
+curl http://localhost:8000/ask ^
+  -H "Content-Type: application/json" ^
+  -H "X-API-Key: dev-key-change-me-in-production" ^
+  -d "{\"question\":\"Hello, introduce yourself briefly.\"}"
+```
+
+## Request Format
+
+You can send a simple one-turn message:
+
+```json
+{
+  "question": "What is Railway?"
+}
+```
+
+Or include short history:
+
+```json
+{
+  "question": "Can you explain it in simpler terms?",
+  "history": [
+    { "role": "user", "content": "What is Railway?" },
+    { "role": "assistant", "content": "Railway is a platform for deploying apps quickly." }
+  ]
+}
+```
+
+## Deploy to Railway
+
+Use this folder as the service root: `06-lab-complete`
+
+```bash
 railway login
 railway init
-railway variables set OPENAI_API_KEY=sk-...
-railway variables set AGENT_API_KEY=your-secret-key
 railway up
-
-# Nhận public URL!
 railway domain
 ```
 
----
+Set these variables in Railway before or after the first deploy:
 
-## Deploy Render
+- `OPENAI_API_KEY`
+- `AGENT_API_KEY`
+- `JWT_SECRET`
+- `ENVIRONMENT=production`
+- `ENABLE_DOCS=true`
 
-1. Push repo lên GitHub
-2. Render Dashboard → New → Blueprint
-3. Connect repo → Render đọc `render.yaml`
-4. Set secrets: `OPENAI_API_KEY`, `AGENT_API_KEY`
-5. Deploy → Nhận URL!
+If you connect the whole repository in Railway Dashboard, set:
 
----
+- `Root Directory` -> `/06-lab-complete`
+- `Config File Path` -> `/06-lab-complete/railway.toml`
 
-## Kiểm Tra Production Readiness
+## Production Check
 
 ```bash
 python check_production_ready.py
 ```
-
-Script này kiểm tra tất cả items trong checklist và báo cáo những gì còn thiếu.

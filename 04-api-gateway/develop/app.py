@@ -10,7 +10,7 @@ Chạy:
 Test:
     # Có key → 200
     curl -H "X-API-Key: my-secret-key" -X POST \\
-         -H "Content-Type: application/json" \\
+         -H "Content-Type: application/json" \\ 
          -d '{"question":"hello"}' \\
          http://localhost:8000/ask
 

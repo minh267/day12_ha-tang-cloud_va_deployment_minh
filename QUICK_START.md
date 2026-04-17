@@ -109,6 +109,18 @@ railway domain
 
 **Expected:** You get a public URL like `https://your-agent.railway.app`
 
+Important for this repo:
+
+- This repository is a monorepo, so the Railway service should deploy from `03-cloud-deployment/railway`, not from the repo root.
+- If you connected the whole GitHub repo in Railway Dashboard, open your service settings and set:
+  - `Root Directory` -> `/03-cloud-deployment/railway`
+  - `Config File Path` -> `/03-cloud-deployment/railway/railway.toml`
+- If you deploy with the CLI, run `railway link` first and make sure you link to the correct service before `railway up`.
+- After deploy, test these URLs first:
+  - `https://<your-domain>/`
+  - `https://<your-domain>/health`
+  - `https://<your-domain>/docs`
+
 Test it:
 ```bash
 curl https://your-agent.railway.app/ask -X POST \
